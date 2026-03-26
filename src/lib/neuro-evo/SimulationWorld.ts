@@ -49,21 +49,22 @@ export class SimulationWorld {
         context.translate(x, y);
         context.rotate(angle);
 
-        // Highlight if best
-        if (creature.isBest && !creature.isDead) {
-          context.beginPath();
-          context.arc(0, 0, TILE_SIZE * 0.8, 0, Math.PI * 2);
-          context.fillStyle = 'rgba(99, 102, 241, 0.2)';
-          context.fill();
-          context.strokeStyle = '#818cf8';
-          context.lineWidth = 2;
-          context.stroke();
-        }
-
-        context.globalAlpha = creature.isDead ? 0.3 : 1.0;
         context.font = `${TILE_SIZE}px serif`;
         context.textAlign = 'center';
         context.textBaseline = 'middle';
+
+        // Highlight if best (Outline effect)
+        if (creature.isBest && !creature.isDead) {
+          context.strokeStyle = 'white';
+          context.lineWidth = 4;
+          context.strokeText(creature.emoji, 0, 0);
+          
+          // Outer glow
+          context.shadowBlur = 10;
+          context.shadowColor = 'rgba(99, 102, 241, 0.8)';
+        }
+
+        context.globalAlpha = creature.isDead ? 0.3 : 1.0;
         
         // Draw emoji
         context.fillText(creature.emoji, 0, 0);
