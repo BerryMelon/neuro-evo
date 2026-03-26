@@ -1,9 +1,9 @@
-import { Brain, Neuron, NeuronType } from './Brain';
+import { Genome, Command, CommandType } from './Genome';
 import { Creature } from './Creature';
 
 export class EvolutionManager {
   populationSize: number = 50;
-  mutationRate: number = 0.1;
+  mutationRate: number = 0.2;
   generation: number = 0;
   creatures: Creature[] = [];
   bestFitness: number = -Infinity;
@@ -13,62 +13,65 @@ export class EvolutionManager {
   }
 
   private getRandomColor() {
-    const colors = [
-      '#6366f1', '#f43f5e', '#22c55e', '#eab308', '#a855f7', 
-      '#06b6d4', '#f97316', '#ec4899', '#8b5cf6', '#10b981'
-    ];
+    const colors = ['#6366f1', '#f43f5e', '#22c55e', '#eab308', '#a855f7', '#06b6d4', '#f97316'];
     return colors[Math.floor(Math.random() * colors.length)];
   }
 
-  initPopulation(startX: number, startY: number, seedBrain?: Brain) {
+  initPopulation(startX: number, startY: number, seedGenome?: Genome) {
     this.creatures = [];
     this.generation = 0;
     this.bestFitness = -Infinity;
 
     for (let i = 0; i < this.populationSize; i++) {
-      const brain = seedBrain ? seedBrain.clone() : new Brain();
-      if (!seedBrain) {
-        this.randomizeBrain(brain);
-      } else if (i > 0) {
-        this.mutateBrain(brain);
+      const genome = seedGenome ? seedGenome.clone() : this.generateRandomGenome();
+      if (seedGenome && i > 0) {
+        this.mutateGenome(genome);
       }
-      this.creatures.push(new Creature(`c-${i}`, startX, startY, brain, this.getRandomColor()));
+      this.creatures.push(new Creature(`c-${i}`, startX, startY, genome, this.getRandomColor()));
     }
   }
 
-  private randomizeBrain(brain: Brain) {
-    const inputs = Array.from(brain.neurons.values()).filter(n => n.type === NeuronType.INPUT);
-    const outputs = Array.from(brain.neurons.values()).filter(n => n.type === NeuronType.OUTPUT);
-
-    for (const input of inputs) {
-      for (const output of outputs) {
-        if (Math.random() < 0.3) {
-          brain.addConnection(input.id, output.id, (Math.random() * 2 - 1));
-        }
-      }
+  private generateRandomGenome(): Genome {
+    const commands: Command[] = [];
+    const len = Math.floor(Math.random() * 5) + 3; // Start with 3-8 commands
+    for (let i = 0; i < len; i++) {
+      commands.push(Genome.getRandomCommand());
     }
+    return new Genome(commands);
   }
 
-  private mutateBrain(brain: Brain) {
-    for (const conn of brain.connections) {
+  private mutateGenome(genome: Genome) {
+    // 1. Weight Mutation
+    genome.commands.forEach(cmd => {
       if (Math.random() < this.mutationRate) {
-        conn.weight += (Math.random() * 0.4 - 0.2);
-        conn.weight = Math.max(-2, Math.min(2, conn.weight));
+        const factor = 1 + (Math.random() * 0.4 - 0.2); // +/- 20%
+        cmd.weight *= factor;
+        cmd.weight = Math.max(0.1, Math.min(200, cmd.weight));
       }
+    });
+
+    // 2. Type Mutation
+    if (Math.random() < 0.1 && genome.commands.length > 0) {
+      const idx = Math.floor(Math.random() * genome.commands.length);
+      const newCmd = Genome.getRandomCommand();
+      genome.commands[idx].type = newCmd.type;
     }
 
+    // 3. Insertion
     if (Math.random() < 0.05) {
-      const neurons = Array.from(brain.neurons.values());
-      const from = neurons[Math.floor(Math.random() * neurons.length)];
-      const to = neurons[Math.floor(Math.random() * neurons.length)];
-      if (to.type !== NeuronType.INPUT && from.type !== NeuronType.OUTPUT) {
-        brain.addConnection(from.id, to.id, (Math.random() * 2 - 1));
-      }
+      const idx = Math.floor(Math.random() * (genome.commands.length + 1));
+      genome.commands.splice(idx, 0, Genome.getRandomCommand());
     }
 
+    // 4. Deletion
+    if (Math.random() < 0.05 && genome.commands.length > 2) {
+      const idx = Math.floor(Math.random() * genome.commands.length);
+      genome.commands.splice(idx, 1);
+    }
+
+    // 5. Shuffle
     if (Math.random() < 0.02) {
-      const id = `H-${Math.random().toString(36).substr(2, 5)}`;
-      brain.addNeuron(new Neuron(id, NeuronType.HIDDEN, 'Hidden'));
+      genome.commands.sort(() => Math.random() - 0.5);
     }
   }
 
@@ -80,16 +83,17 @@ export class EvolutionManager {
     const topPerformers = this.creatures.slice(0, Math.ceil(this.populationSize * 0.1));
     const nextGen: Creature[] = [];
 
+    // Elitism
     for (let i = 0; i < topPerformers.length; i++) {
-      const eliteBrain = topPerformers[i].brain.clone();
-      nextGen.push(new Creature(`c-elite-${i}`, startX, startY, eliteBrain, topPerformers[i].color));
+      nextGen.push(new Creature(`elite-${i}`, startX, startY, topPerformers[i].genome.clone(), topPerformers[i].color));
     }
 
+    // Reproduction
     while (nextGen.length < this.populationSize) {
       const parent = topPerformers[Math.floor(Math.random() * topPerformers.length)];
-      const childBrain = parent.brain.clone();
-      this.mutateBrain(childBrain);
-      nextGen.push(new Creature(`c-${nextGen.length}`, startX, startY, childBrain, parent.color));
+      const childGenome = parent.genome.clone();
+      this.mutateGenome(childGenome);
+      nextGen.push(new Creature(`c-${nextGen.length}`, startX, startY, childGenome, parent.color));
     }
 
     this.creatures = nextGen;
