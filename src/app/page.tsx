@@ -145,6 +145,16 @@ export default function NeuroEvo() {
     }
   };
 
+  const addSeedCommand = (type: CommandType) => {
+    const defaultWeight = (type === CommandType.MOVE_LEFT || type === CommandType.MOVE_RIGHT || type === CommandType.WAIT) ? 60 : 1.0;
+    setSeedCommands([...seedCommands, { type, weight: defaultWeight }]);
+  };
+
+  const randomizeSeed = () => {
+    const randomGenome = evoRef.current.generateRandomGenome();
+    setSeedCommands(randomGenome.commands);
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
       <header className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
