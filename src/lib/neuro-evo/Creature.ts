@@ -1,6 +1,6 @@
 import Matter from 'matter-js';
 import { Genome, CommandType } from './Genome';
-import { TILE_SIZE } from './constants';
+import { TILE_SIZE, GRID_SIZE } from './constants';
 
 export class Creature {
   id: string;
