@@ -48,6 +48,18 @@ export class SimulationWorld {
         context.save();
         context.translate(x, y);
         context.rotate(angle);
+
+        // Highlight if best
+        if (creature.isBest && !creature.isDead) {
+          context.beginPath();
+          context.arc(0, 0, TILE_SIZE * 0.8, 0, Math.PI * 2);
+          context.fillStyle = 'rgba(99, 102, 241, 0.2)';
+          context.fill();
+          context.strokeStyle = '#818cf8';
+          context.lineWidth = 2;
+          context.stroke();
+        }
+
         context.globalAlpha = creature.isDead ? 0.3 : 1.0;
         context.font = `${TILE_SIZE}px serif`;
         context.textAlign = 'center';

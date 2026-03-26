@@ -19,6 +19,7 @@ export class Creature {
   currentCommandTicks: number = 0;
   isOnGround: boolean = false;
   ticksOnGoal: number = 0;
+  isBest: boolean = false;
 
   constructor(id: string, x: number, y: number, genome: Genome, color: string = '#6366f1', emoji: string = '🐌') {
     this.id = id;

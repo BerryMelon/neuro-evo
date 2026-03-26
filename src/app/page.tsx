@@ -66,6 +66,10 @@ export default function NeuroEvo() {
 
     const sorted = [...evoRef.current.creatures].sort((a, b) => b.fitness - a.fitness);
     const best = sorted[0];
+    
+    // Set isBest flag for highlighting
+    evoRef.current.creatures.forEach(c => c.isBest = c.id === best.id);
+
     setBestGenome(best.genome.clone());
     setBestCommandIndex(best.currentCommandIndex);
 
