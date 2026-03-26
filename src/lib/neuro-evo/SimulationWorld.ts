@@ -10,13 +10,14 @@ export class SimulationWorld {
   goalPos: { x: number, y: number } = { x: 0, y: 0 };
   spawnPos: { x: number, y: number } = { x: 100, y: 100 };
   container: HTMLElement;
+  creatures: Creature[] = [];
 
   constructor(container: HTMLElement) {
     this.container = container;
     this.engine = Matter.Engine.create({
       gravity: { x: 0, y: 1 },
-      positionIterations: 10, // Default is 6
-      velocityIterations: 10  // Default is 4
+      positionIterations: 10,
+      velocityIterations: 10
     });
   }
 
@@ -33,19 +34,51 @@ export class SimulationWorld {
     });
 
     Matter.Render.run(this.render);
+
+    // Custom rendering for emojis
+    Matter.Events.on(this.render, 'afterRender', () => {
+      const context = this.render!.canvas.getContext('2d');
+      if (!context) return;
+
+      this.creatures.forEach(creature => {
+        if (creature.isDead && !creature.hasReachedGoal) return;
+        
+        const { x, y } = creature.body.position;
+        const angle = creature.body.angle;
+
+        context.save();
+        context.translate(x, y);
+        context.rotate(angle);
+        context.font = `${TILE_SIZE}px serif`;
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        
+        // Draw emoji
+        context.fillText(creature.emoji, 0, 0);
+        
+        // Draw small health/progress bar if staying on goal
+        if (creature.ticksOnGoal > 0 && !creature.hasReachedGoal) {
+          context.fillStyle = '#22c55e';
+          context.fillRect(-TILE_SIZE/2, -TILE_SIZE, (creature.ticksOnGoal/60) * TILE_SIZE, 3);
+        }
+
+        context.restore();
+      });
+    });
   }
 
-  // Manual step instead of Runner for better control in simulation
   step() {
     Matter.Engine.update(this.engine, 1000 / 60);
   }
 
   addCreatures(creatures: Creature[]) {
+    this.creatures = creatures;
     const bodies = creatures.map(c => c.body);
     Matter.Composite.add(this.engine.world, bodies);
   }
 
   clearCreatures(creatures: Creature[]) {
+    this.creatures = [];
     const bodies = creatures.map(c => c.body);
     Matter.Composite.remove(this.engine.world, bodies);
   }

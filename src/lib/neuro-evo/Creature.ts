@@ -12,24 +12,29 @@ export class Creature {
   ticksAlive: number = 0;
   initialPos: { x: number, y: number };
   color: string;
+  emoji: string;
 
   // Sequencing state
   currentCommandIndex: number = 0;
   currentCommandTicks: number = 0;
   isOnGround: boolean = false;
+  ticksOnGoal: number = 0;
 
-  constructor(id: string, x: number, y: number, genome: Genome, color: string = '#6366f1') {
+  constructor(id: string, x: number, y: number, genome: Genome, color: string = '#6366f1', emoji: string = '🐌') {
     this.id = id;
     this.genome = genome;
     this.initialPos = { x, y };
     this.color = color;
+    this.emoji = emoji;
     
-    this.body = Matter.Bodies.rectangle(x, y, TILE_SIZE * 0.8, TILE_SIZE * 0.8, {
+    this.body = Matter.Bodies.rectangle(x, y, TILE_SIZE * 0.9, TILE_SIZE * 0.9, {
       friction: 0.1,
-      restitution: 0.2, // Lower restitution for stability
+      restitution: 0.2,
       label: 'creature',
       collisionFilter: { group: -1 },
-      render: { fillStyle: this.color }
+      render: { 
+        visible: false // We will render emoji manually or via custom drawing
+      }
     });
   }
 
@@ -38,13 +43,10 @@ export class Creature {
 
     this.ticksAlive++;
     
-    // 1. Check ground status
     this.updateGroundStatus(engine);
-
-    // 2. Execute current command
     this.executeCurrentCommand();
 
-    // 3. Update Fitness (distance to goal)
+    // Fitness calculation
     const currentDist = Math.sqrt(
       Math.pow(this.body.position.x - goalPos.x, 2) + 
       Math.pow(this.body.position.y - goalPos.y, 2)
@@ -54,13 +56,18 @@ export class Creature {
       Math.pow(this.initialPos.y - goalPos.y, 2)
     );
     
-    // Simple fitness: progress made toward goal
     this.fitness = initialDist - currentDist;
 
-    // Check goal reach
-    if (currentDist < TILE_SIZE) {
-      this.hasReachedGoal = true;
-      this.fitness += 1000; // Bonus for reaching
+    // GOAL Logic: Must STAY on goal
+    if (currentDist < TILE_SIZE * 1.2) {
+      this.ticksOnGoal++;
+      // Must stay for 60 ticks (~1 second) to count as victory
+      if (this.ticksOnGoal >= 60) {
+        this.hasReachedGoal = true;
+        this.fitness += 5000;
+      }
+    } else {
+      this.ticksOnGoal = 0; // Reset if they move away
     }
   }
 
@@ -129,8 +136,6 @@ export class Creature {
   private advanceCommand() {
     this.currentCommandIndex++;
     this.currentCommandTicks = 0;
-    
-    // If we finished the sequence, the creature stays still (is considered finished/dead for simulation)
     if (this.currentCommandIndex >= this.genome.commands.length) {
       this.isDead = true;
     }

@@ -7,7 +7,7 @@ import { GRID_SIZE, TILE_SIZE, TileType, type Grid, INITIAL_GRID } from '@/lib/n
 import CommandSequenceView from '@/components/neuro-evo/CommandSequenceView';
 import { Genome, CommandType, Command } from '@/lib/neuro-evo/Genome';
 
-const TICKS_PER_GEN = 1000; // More ticks for commands
+const TICKS_PER_GEN = 1000;
 
 export default function NeuroEvo() {
   const [grid, setGrid] = useState<Grid>(INITIAL_GRID);
@@ -19,6 +19,7 @@ export default function NeuroEvo() {
   const [bestGenome, setBestGenome] = useState<Genome | null>(null);
   const [bestCommandIndex, setBestCommandIndex] = useState(0);
   const [simSpeed, setSimSpeed] = useState(1); 
+  const [currentEmoji, setCurrentEmoji] = useState('🐌');
   
   // Manual Editor State
   const [seedCommands, setSeedCommands] = useState<Command[]>([]);
@@ -66,13 +67,13 @@ export default function NeuroEvo() {
 
     if (nextTicks >= TICKS_PER_GEN) {
       const { x, y } = worldRef.current.spawnPos;
-      
       worldRef.current.clearCreatures(evoRef.current.creatures);
       evoRef.current.nextGeneration(x, y);
       worldRef.current.addCreatures(evoRef.current.creatures);
       
       setGeneration(evoRef.current.generation);
       setBestFitness(evoRef.current.bestFitness);
+      setCurrentEmoji(evoRef.current.currentEmoji);
       setCurrentTicks(0);
     } else {
       requestRef.current = requestAnimationFrame(runTick);
@@ -86,6 +87,7 @@ export default function NeuroEvo() {
         const seed = seedCommands.length > 0 ? new Genome(seedCommands) : undefined;
         evoRef.current.initPopulation(x, y, seed);
         worldRef.current?.addCreatures(evoRef.current.creatures);
+        setCurrentEmoji(evoRef.current.currentEmoji);
       }
       requestRef.current = requestAnimationFrame(runTick);
     } else {
@@ -128,7 +130,7 @@ export default function NeuroEvo() {
         if (row.includes(TileType.GOAL)) hasGoal = true;
       }
       if (!hasSpawn || !hasGoal) {
-        alert("Need SPAWN and GOAL!");
+        alert("Please place both a SPAWN point and a GOAL point before starting!");
         return;
       }
       setIsSimulating(true);
@@ -140,18 +142,23 @@ export default function NeuroEvo() {
     setSeedCommands([...seedCommands, { type, weight: defaultWeight }]);
   };
 
+  const randomizeSeed = () => {
+    const randomGenome = evoRef.current.generateRandomGenome();
+    setSeedCommands(randomGenome.commands);
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
       <header className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
         <div className="flex items-center gap-4">
           <div>
             <h1 className="text-2xl font-black tracking-tighter text-indigo-500">COMMAND EVO</h1>
-            <p className="text-slate-400 text-xs uppercase tracking-widest font-bold">Action Sequence Sandbox</p>
+            <p className="text-slate-400 text-[10px] uppercase tracking-widest font-bold">Generation Progress</p>
           </div>
           <div className="h-10 w-px bg-slate-800 ml-2" />
           <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-slate-500 uppercase">Progression</span>
-            <div className="w-32 h-1.5 bg-slate-800 rounded-full mt-1 overflow-hidden">
+            <span className="text-[10px] font-bold text-slate-500 uppercase">Tick {currentTicks} / {TICKS_PER_GEN}</span>
+            <div className="w-48 h-2 bg-slate-800 rounded-full mt-1 overflow-hidden">
               <div className="h-full bg-indigo-500 transition-all duration-300" style={{ width: `${(currentTicks / TICKS_PER_GEN) * 100}%` }} />
             </div>
           </div>
@@ -181,7 +188,7 @@ export default function NeuroEvo() {
 
       <main className="flex-1 overflow-hidden relative flex">
         <div className="flex-1 flex items-center justify-center p-8 overflow-auto bg-[radial-gradient(circle_at_center,_var(--tw-gradient-from)_0%,_transparent_100%)] from-indigo-500/5">
-          <div className="relative shadow-2xl rounded-lg overflow-hidden border border-slate-800 ring-8 ring-slate-900/50">
+          <div className="relative shadow-2xl rounded-lg overflow-hidden border border-slate-800 ring-8 ring-slate-900/50 bg-slate-950">
             <div ref={simContainerRef} className={`transition-opacity duration-500 ${isSimulating ? 'opacity-100' : 'opacity-30 pointer-events-none'}`} />
             {!isSimulating && (
               <div 
@@ -209,60 +216,77 @@ export default function NeuroEvo() {
           </div>
         </div>
 
-        <aside className="w-[450px] border-l border-slate-800 bg-slate-900/30 p-6 flex flex-col gap-8 overflow-auto">
+        <aside className="w-[500px] border-l border-slate-800 bg-slate-900/30 p-6 flex flex-col gap-8 overflow-auto">
           <section>
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-4 text-center">Stats</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-4 text-center">Gen {generation} ({currentEmoji})</h3>
             <div className="grid grid-cols-2 gap-4 text-center">
               <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
-                <p className="text-[8px] text-slate-500 uppercase font-bold">Generation</p>
-                <p className="text-2xl font-mono font-black text-indigo-400">{generation}</p>
-              </div>
-              <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
                 <p className="text-[8px] text-slate-500 uppercase font-bold">Best Fitness</p>
-                <p className="text-2xl font-mono font-bold text-green-400">{Math.round(bestFitness)}</p>
+                <p className="text-2xl font-mono font-black text-green-400">{Math.round(bestFitness)}</p>
+              </div>
+              <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 flex flex-col justify-center">
+                <p className="text-[8px] text-slate-500 uppercase font-bold">Speed</p>
+                <p className="text-xl font-mono font-black text-indigo-400">{simSpeed}x</p>
               </div>
             </div>
           </section>
 
           <section>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Simulation Speed</h3>
-              <span className="text-xs font-mono font-bold text-slate-400">{simSpeed}x</span>
-            </div>
             <input type="range" min="1" max="10" step="1" value={simSpeed} onChange={(e) => setSimSpeed(parseInt(e.target.value))} className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500" />
           </section>
 
           <section className="flex-1 flex flex-col min-h-0">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-4 text-center">
-              {isSimulating ? 'Best Creature Sequence' : 'Seed Ancestor Editor'}
-            </h3>
+            <div className="flex justify-between items-center mb-4 px-2">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
+                {isSimulating ? 'Current Best Sequence' : 'Seed Ancestor Editor'}
+              </h3>
+              {!isSimulating && (
+                <button 
+                  onClick={randomizeSeed}
+                  className="text-[8px] font-black bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 px-2 py-1 rounded hover:bg-indigo-600/40 transition-all"
+                >
+                  RANDOMIZE SEED
+                </button>
+              )}
+            </div>
             
             {isSimulating ? (
               bestGenome && <CommandSequenceView genome={bestGenome} currentIndex={bestCommandIndex} />
             ) : (
-              <div className="flex flex-col h-full">
-                <div className="flex-1 bg-slate-900/50 rounded-2xl border border-slate-800 border-dashed p-4 mb-4 overflow-auto">
+              <div className="flex flex-col h-full bg-slate-900/50 rounded-2xl border border-slate-800 p-6">
+                <div className="flex-1 overflow-auto mb-6">
                   {seedCommands.length === 0 ? (
-                    <p className="text-slate-600 text-[10px] italic text-center mt-10">Add commands to create a "God Seed" or leave empty for random chaos</p>
+                    <div className="h-full flex flex-col items-center justify-center text-center px-8">
+                      <span className="text-4xl mb-4 opacity-20">🧬</span>
+                      <p className="text-slate-600 text-[10px] italic leading-relaxed uppercase tracking-tighter">Add commands to create a "God Seed" or click Randomize to start from chaos</p>
+                    </div>
                   ) : (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="grid grid-cols-3 gap-3">
                       {seedCommands.map((cmd, i) => (
-                        <div key={i} className="bg-slate-800 p-2 rounded border border-slate-700 text-[10px] flex items-center gap-2">
-                          <span className="font-bold">{cmd.type}</span>
-                          <button onClick={() => setSeedCommands(seedCommands.filter((_, idx) => idx !== i))} className="text-rose-500 font-bold">×</button>
+                        <div key={i} className="bg-slate-800 p-3 rounded-xl border border-slate-700 text-[10px] flex flex-col items-center relative group">
+                          <span className="text-lg mb-1">
+                            {cmd.type.includes('LEFT') ? '←' : cmd.type.includes('RIGHT') ? '→' : cmd.type.includes('UP') ? '↑' : '⏳'}
+                          </span>
+                          <span className="font-black text-[8px] text-slate-400">{cmd.type.split('_').pop()}</span>
+                          <button 
+                            onClick={() => setSeedCommands(seedCommands.filter((_, idx) => idx !== i))} 
+                            className="absolute -top-2 -right-2 w-5 h-5 bg-rose-600 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                          >
+                            ×
+                          </button>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   {Object.values(CommandType).map(type => (
                     <button 
                       key={type}
                       onClick={() => addSeedCommand(type)}
-                      className="py-2 bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-[8px] font-black uppercase tracking-widest"
+                      className="py-3 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 text-[9px] font-black uppercase tracking-widest transition-all hover:scale-[1.02]"
                     >
-                      + {type.replace('JUMP_', 'J ').replace('MOVE_', 'M ')}
+                      + {type.replace('JUMP_', 'JUMP ').replace('MOVE_', 'MOVE ')}
                     </button>
                   ))}
                 </div>
@@ -274,7 +298,7 @@ export default function NeuroEvo() {
             <button 
               onClick={() => setGrid(Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(TileType.EMPTY)))}
               disabled={isSimulating}
-              className="w-full py-3 rounded-xl border border-rose-900/30 bg-rose-950/10 text-xs font-bold text-rose-400 hover:bg-rose-900/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
+              className="w-full py-3 rounded-xl border border-rose-900/30 bg-rose-950/10 text-[10px] font-black text-rose-400 hover:bg-rose-900/20 transition-all disabled:opacity-30 uppercase tracking-widest shadow-lg"
             >
               CLEAR BOARD
             </button>
