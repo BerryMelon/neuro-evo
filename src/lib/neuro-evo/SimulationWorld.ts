@@ -41,14 +41,14 @@ export class SimulationWorld {
       if (!context) return;
 
       this.creatures.forEach(creature => {
-        if (creature.isDead && !creature.hasReachedGoal) return;
-        
+        // We still draw dead creatures but with lower opacity
         const { x, y } = creature.body.position;
         const angle = creature.body.angle;
 
         context.save();
         context.translate(x, y);
         context.rotate(angle);
+        context.globalAlpha = creature.isDead ? 0.3 : 1.0;
         context.font = `${TILE_SIZE}px serif`;
         context.textAlign = 'center';
         context.textBaseline = 'middle';
@@ -57,7 +57,8 @@ export class SimulationWorld {
         context.fillText(creature.emoji, 0, 0);
         
         // Draw small health/progress bar if staying on goal
-        if (creature.ticksOnGoal > 0 && !creature.hasReachedGoal) {
+        if (creature.ticksOnGoal > 0 && !creature.hasReachedGoal && !creature.isDead) {
+          context.globalAlpha = 1.0;
           context.fillStyle = '#22c55e';
           context.fillRect(-TILE_SIZE/2, -TILE_SIZE, (creature.ticksOnGoal/60) * TILE_SIZE, 3);
         }

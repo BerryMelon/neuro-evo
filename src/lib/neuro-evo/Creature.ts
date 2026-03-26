@@ -74,7 +74,9 @@ export class Creature {
       // Must stay for 60 ticks (~1 second) to count as victory
       if (this.ticksOnGoal >= 60) {
         this.hasReachedGoal = true;
-        this.fitness += 5000;
+        // Speed bonus: More points for reaching goal earlier
+        const speedBonus = Math.max(0, 1000 - this.ticksAlive);
+        this.fitness += 5000 + speedBonus;
       }
     } else {
       this.ticksOnGoal = 0; // Reset if they move away
