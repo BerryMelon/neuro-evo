@@ -11,18 +11,23 @@ export class Creature {
   hasReachedGoal: boolean = false;
   ticksAlive: number = 0;
   initialPos: { x: number, y: number };
+  color: string;
 
-  constructor(id: string, x: number, y: number, brain: Brain) {
+  constructor(id: string, x: number, y: number, brain: Brain, color: string = '#6366f1') {
     this.id = id;
     this.brain = brain;
     this.initialPos = { x, y };
+    this.color = color;
     
     this.body = Matter.Bodies.rectangle(x, y, TILE_SIZE * 0.8, TILE_SIZE * 0.8, {
       friction: 0.1,
       restitution: 0.5,
       label: 'creature',
+      collisionFilter: {
+        group: -1, // Negative group means no collision between bodies in this group
+      },
       render: {
-        fillStyle: '#6366f1' // indigo-500
+        fillStyle: this.color
       }
     });
   }
@@ -32,13 +37,13 @@ export class Creature {
 
     this.ticksAlive++;
 
-    // 1. Update Sensors (Inputs)
+    // 1. Update Sensors
     this.updateSensors(goalPos, engine);
 
     // 2. Think
     this.brain.compute();
 
-    // 3. Act (Apply Forces)
+    // 3. Act
     this.applyActuators();
 
     // 4. Update Fitness
@@ -46,7 +51,6 @@ export class Creature {
       Math.pow(this.body.position.x - goalPos.x, 2) + 
       Math.pow(this.body.position.y - goalPos.y, 2)
     );
-    // Fitness is progress made toward goal
     const initialDist = Math.sqrt(
       Math.pow(this.initialPos.x - goalPos.x, 2) + 
       Math.pow(this.initialPos.y - goalPos.y, 2)
@@ -55,18 +59,14 @@ export class Creature {
   }
 
   private updateSensors(goalPos: { x: number, y: number }, engine: Matter.Engine) {
-    // Reset inputs
     const bias = this.brain.neurons.get('Bias');
     if (bias) bias.value = 1.0;
 
-    // Relative goal direction (-1 to 1)
     const goalX = this.brain.neurons.get('GoalX');
     const goalY = this.brain.neurons.get('GoalY');
     if (goalX) goalX.value = Math.max(-1, Math.min(1, (goalPos.x - this.body.position.x) / 500));
     if (goalY) goalY.value = Math.max(-1, Math.min(1, (goalPos.y - this.body.position.y) / 500));
 
-    // Simple Raycasting or Collision detection for Touch sensors
-    // We check for intersections with static bodies in 4 directions
     const checkTouch = (offsetX: number, offsetY: number) => {
       const sensorPos = { 
         x: this.body.position.x + offsetX, 

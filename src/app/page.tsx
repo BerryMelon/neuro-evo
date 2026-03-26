@@ -17,6 +17,7 @@ export default function NeuroEvo() {
   const [bestFitness, setBestFitness] = useState(0);
   const [currentTicks, setCurrentTicks] = useState(0);
   const [bestBrain, setBestBrain] = useState<Brain | null>(null);
+  const [simSpeed, setSimSpeed] = useState(1); // 1x, 2x, 5x, etc.
   
   const simContainerRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<SimulationWorld | null>(null);
@@ -24,7 +25,6 @@ export default function NeuroEvo() {
   const requestRef = useRef<number>(null);
   const isDragging = useRef(false);
 
-  // Initialize simulation world
   useEffect(() => {
     if (simContainerRef.current && !worldRef.current) {
       worldRef.current = new SimulationWorld(simContainerRef.current);
@@ -37,7 +37,6 @@ export default function NeuroEvo() {
     };
   }, []);
 
-  // Update world when grid changes
   useEffect(() => {
     worldRef.current?.updateGrid(grid);
   }, [grid]);
@@ -45,25 +44,29 @@ export default function NeuroEvo() {
   const runTick = useCallback(() => {
     if (!worldRef.current || !evoRef.current || !isSimulating) return;
 
-    evoRef.current.creatures.forEach(creature => {
-      creature.update(worldRef.current!.goalPos, worldRef.current!.engine);
-    });
+    // Run multiple steps per frame based on simSpeed
+    for (let s = 0; s < simSpeed; s++) {
+      evoRef.current.creatures.forEach(creature => {
+        creature.update(worldRef.current!.goalPos, worldRef.current!.engine);
+      });
 
-    worldRef.current.step();
+      worldRef.current.step();
 
-    const nextTicks = currentTicks + 1;
+      // We need to access the most current ticks within this loop
+      // but since currentTicks is from state, it's stale.
+      // We'll manage a local counter if needed or rely on the outside logic.
+    }
+
+    const nextTicks = currentTicks + simSpeed;
     setCurrentTicks(nextTicks);
 
-    // Periodically update the best brain visualization during simulation
-    if (nextTicks % 20 === 0) {
+    if (nextTicks % 20 === 0 || simSpeed > 1) {
       const sorted = [...evoRef.current.creatures].sort((a, b) => b.fitness - a.fitness);
       setBestBrain(sorted[0].brain.clone());
     }
 
     if (nextTicks >= TICKS_PER_GEN) {
       const { x, y } = worldRef.current.spawnPos;
-      
-      // Save best brain of the generation
       const sorted = [...evoRef.current.creatures].sort((a, b) => b.fitness - a.fitness);
       setBestBrain(sorted[0].brain.clone());
 
@@ -77,7 +80,7 @@ export default function NeuroEvo() {
     } else {
       requestRef.current = requestAnimationFrame(runTick);
     }
-  }, [isSimulating, currentTicks]);
+  }, [isSimulating, currentTicks, simSpeed]);
 
   useEffect(() => {
     if (isSimulating) {
@@ -111,7 +114,6 @@ export default function NeuroEvo() {
         }
       }
     }
-    
     setGrid(newGrid);
   };
 
@@ -124,6 +126,19 @@ export default function NeuroEvo() {
       setBestFitness(0);
       setBestBrain(null);
     } else {
+      // 1. Validation Check
+      let hasSpawn = false;
+      let hasGoal = false;
+      for (const row of grid) {
+        if (row.includes(TileType.SPAWN)) hasSpawn = true;
+        if (row.includes(TileType.GOAL)) hasGoal = true;
+      }
+
+      if (!hasSpawn || !hasGoal) {
+        alert("Please place both a SPAWN point and a GOAL point before starting!");
+        return;
+      }
+
       setIsSimulating(true);
     }
   };
@@ -234,6 +249,19 @@ export default function NeuroEvo() {
             </div>
           </section>
 
+          <section>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Simulation Speed</h3>
+              <span className="text-xs font-mono font-bold text-slate-400">{simSpeed}x</span>
+            </div>
+            <input 
+              type="range" min="1" max="10" step="1"
+              value={simSpeed}
+              onChange={(e) => setSimSpeed(parseInt(e.target.value))}
+              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+            />
+          </section>
+
           <section className="flex-1 flex flex-col min-h-0">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-4 text-center">Best Creature Brain</h3>
             {bestBrain ? (
@@ -247,14 +275,21 @@ export default function NeuroEvo() {
             )}
           </section>
 
-          <section className="mt-auto">
+          <section className="mt-auto space-y-3">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-4">Environment</h3>
             <button 
               onClick={() => setGrid(INITIAL_GRID)}
               disabled={isSimulating}
               className="w-full py-3 rounded-xl border border-slate-700 text-xs font-bold text-slate-400 hover:bg-slate-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              CLEAR BOARD
+              RESET TO INITIAL
+            </button>
+            <button 
+              onClick={() => setGrid(Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(TileType.EMPTY)))}
+              disabled={isSimulating}
+              className="w-full py-3 rounded-xl border border-rose-900/30 bg-rose-950/10 text-xs font-bold text-rose-400 hover:bg-rose-900/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              CLEAR EVERYTHING
             </button>
           </section>
         </aside>
