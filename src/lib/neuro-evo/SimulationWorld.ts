@@ -53,15 +53,17 @@ export class SimulationWorld {
         context.textAlign = 'center';
         context.textBaseline = 'middle';
 
-        // Highlight if best (Outline effect)
+        // Highlight if best (Strong Outline + Glow effect)
         if (creature.isBest && !creature.isDead) {
+          context.save();
           context.strokeStyle = 'white';
-          context.lineWidth = 4;
+          context.lineWidth = 6;
           context.strokeText(creature.emoji, 0, 0);
           
-          // Outer glow
-          context.shadowBlur = 10;
-          context.shadowColor = 'rgba(99, 102, 241, 0.8)';
+          context.shadowBlur = 20;
+          context.shadowColor = '#6366f1'; // Indigo-500
+          context.strokeText(creature.emoji, 0, 0); // Double stroke for glow intensity
+          context.restore();
         }
 
         context.globalAlpha = creature.isDead ? 0.3 : 1.0;

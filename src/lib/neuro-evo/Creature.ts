@@ -125,21 +125,21 @@ export class Creature {
       case CommandType.JUMP_UP:
         if (this.currentCommandTicks === 1) {
           Matter.Body.applyForce(this.body, this.body.position, { x: 0, y: -jumpForce * command.weight });
-        } else if (this.currentCommandTicks > 10 && this.isOnGround) {
+        } else if (this.currentCommandTicks > 300 || (this.currentCommandTicks > 10 && this.isOnGround)) {
           this.advanceCommand();
         }
         break;
       case CommandType.JUMP_LEFT:
         if (this.currentCommandTicks === 1) {
           Matter.Body.applyForce(this.body, this.body.position, { x: -jumpForce * 0.5 * command.weight, y: -jumpForce * command.weight });
-        } else if (this.currentCommandTicks > 10 && this.isOnGround) {
+        } else if (this.currentCommandTicks > 300 || (this.currentCommandTicks > 10 && this.isOnGround)) {
           this.advanceCommand();
         }
         break;
       case CommandType.JUMP_RIGHT:
         if (this.currentCommandTicks === 1) {
           Matter.Body.applyForce(this.body, this.body.position, { x: jumpForce * 0.5 * command.weight, y: -jumpForce * command.weight });
-        } else if (this.currentCommandTicks > 10 && this.isOnGround) {
+        } else if (this.currentCommandTicks > 300 || (this.currentCommandTicks > 10 && this.isOnGround)) {
           this.advanceCommand();
         }
         break;
