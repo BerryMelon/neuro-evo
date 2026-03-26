@@ -1,36 +1,26 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NeuroEvo Sandbox
 
-## Getting Started
+An interactive 2D playground for **Neuroevolution**. Design or randomize neural-controlled creatures and watch them evolve to navigate complex grid-based environments.
 
-First, run the development server:
+## 🚀 Features
+- **Grid-based World:** Paint walls, obstacles, and goals.
+- **Neural Brains:** Visualize and evolve neural networks (CFR-inspired or random initialization).
+- **Physical Simulation:** Powered by **Matter.js** for realistic gravity and collisions.
+- **Genetic Algorithm:** Automated population management with elitism and mutation.
+- **Real-time Visualization:** Watch neurons fire as creatures learn to move.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🛠 Tech Stack
+- **Next.js 15** (React)
+- **TypeScript**
+- **Matter.js** (2D Physics Engine)
+- **Tailwind CSS**
+- **Framer Motion** (UI Animations)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🌐 Deployment
+Hosted on GitHub Pages: [https://berrymelon.github.io/neuro-evo/](https://berrymelon.github.io/neuro-evo/)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📖 How to Use
+1. **Design:** Use the grid tools to draw walls and a **SPAWN** point and a **GOAL**.
+2. **Evolve:** Click "START EVOLUTION" to spawn a population.
+3. **Observe:** Watch the "Best Creature Brain" panel to see which neurons are firing.
+4. **Iterate:** See the AI discover strategies like jumping or navigating around walls over multiple generations.
