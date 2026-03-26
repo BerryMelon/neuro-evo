@@ -8,15 +8,12 @@ import CommandSequenceView from '@/components/neuro-evo/CommandSequenceView';
 import { Genome, CommandType, Command } from '@/lib/neuro-evo/Genome';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const TICKS_PER_GEN = 1000;
-
 export default function NeuroEvo() {
   const [grid, setGrid] = useState<Grid>(INITIAL_GRID);
   const [activeTileType, setActiveTileType] = useState<TileType>(TileType.WALL);
   const [isSimulating, setIsSimulating] = useState(false);
   const [generation, setGeneration] = useState(0);
   const [bestFitness, setBestFitness] = useState(0);
-  const [currentTicks, setCurrentTicks] = useState(0);
   const [bestGenome, setBestGenome] = useState<Genome | null>(null);
   const [bestCommandIndex, setBestCommandIndex] = useState(0);
   const [simSpeed, setSimSpeed] = useState(1); 
@@ -30,9 +27,6 @@ export default function NeuroEvo() {
   const evoRef = useRef<EvolutionManager>(new EvolutionManager(30));
   const requestRef = useRef<number>(null);
   const isDragging = useRef(false);
-  
-  // Use a ref for currentTicks to ensure the animation loop always has the fresh value
-  const ticksRef = useRef(0);
 
   useEffect(() => {
     if (simContainerRef.current && !worldRef.current) {
@@ -58,24 +52,18 @@ export default function NeuroEvo() {
         creature.update(worldRef.current!.goalPos, worldRef.current!.engine);
       });
       worldRef.current.step();
-      ticksRef.current++;
     }
-
-    // Sync ref to state for UI (infrequent sync for performance)
-    setCurrentTicks(ticksRef.current);
 
     const sorted = [...evoRef.current.creatures].sort((a, b) => b.fitness - a.fitness);
     const best = sorted[0];
     
-    // Set isBest flag for highlighting
     evoRef.current.creatures.forEach(c => c.isBest = c.id === best.id);
-
     setBestGenome(best.genome.clone());
     setBestCommandIndex(best.currentCommandIndex);
 
-    const allFinished = evoRef.current.creatures.every(c => c.isDead);
+    const allFinished = evoRef.current.creatures.every(c => c.isDead || c.hasReachedGoal);
 
-    if (ticksRef.current >= TICKS_PER_GEN || allFinished) {
+    if (allFinished) {
       const { x, y } = worldRef.current.spawnPos;
       worldRef.current.clearCreatures(evoRef.current.creatures);
       evoRef.current.nextGeneration(x, y);
@@ -84,8 +72,6 @@ export default function NeuroEvo() {
       setGeneration(evoRef.current.generation);
       setBestFitness(evoRef.current.bestFitness);
       setCurrentEmoji(evoRef.current.currentEmoji);
-      ticksRef.current = 0;
-      setCurrentTicks(0);
     }
     
     requestRef.current = requestAnimationFrame(runTick);
@@ -93,7 +79,7 @@ export default function NeuroEvo() {
 
   useEffect(() => {
     if (isSimulating) {
-      if (ticksRef.current === 0 && generation === 0) {
+      if (generation === 0) {
         const { x, y } = worldRef.current?.spawnPos || { x: 100, y: 100 };
         const seed = seedCommands.length > 0 ? new Genome(seedCommands) : undefined;
         evoRef.current.initPopulation(x, y, seed);
@@ -129,8 +115,6 @@ export default function NeuroEvo() {
     if (isSimulating) {
       setIsSimulating(false);
       worldRef.current?.clearCreatures(evoRef.current.creatures);
-      ticksRef.current = 0;
-      setCurrentTicks(0);
       setGeneration(0);
       setBestFitness(0);
       setBestGenome(null);
@@ -142,7 +126,7 @@ export default function NeuroEvo() {
         if (row.includes(TileType.GOAL)) hasGoal = true;
       }
       if (!hasSpawn || !hasGoal) {
-        alert("Please place both a SPAWN point and a GOAL point!");
+        alert("Need SPAWN and GOAL!");
         return;
       }
       setIsSimulating(true);
@@ -166,16 +150,6 @@ export default function NeuroEvo() {
           <div>
             <h1 className="text-2xl font-black tracking-tighter text-indigo-500 italic">COMMAND EVO</h1>
             <p className="text-slate-400 text-[10px] uppercase tracking-widest font-bold">Evolutionary Sandbox</p>
-          </div>
-          <div className="h-10 w-px bg-slate-800 ml-2" />
-          <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-slate-500 uppercase">Generation Progress</span>
-            <div className="w-48 h-2 bg-slate-800 rounded-full mt-1 overflow-hidden border border-slate-700">
-              <div 
-                className="h-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)] transition-all duration-100 ease-linear" 
-                style={{ width: `${(currentTicks / TICKS_PER_GEN) * 100}%` }} 
-              />
-            </div>
           </div>
         </div>
         
@@ -224,7 +198,6 @@ export default function NeuroEvo() {
             )}
           </div>
 
-          {/* Grid Toolbar Below Map */}
           {!isSimulating && (
             <div className="mt-8 flex flex-col items-center gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex bg-slate-900 border border-slate-800 p-1.5 rounded-2xl shadow-xl gap-1">
@@ -251,7 +224,6 @@ export default function NeuroEvo() {
                   CLEAR BOARD
                 </button>
               </div>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Board Designer</p>
             </div>
           )}
         </div>
@@ -335,7 +307,6 @@ export default function NeuroEvo() {
         </aside>
       </main>
 
-      {/* How It Works Modal */}
       <AnimatePresence>
         {showHowItWorks && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -345,15 +316,15 @@ export default function NeuroEvo() {
               <div className="space-y-8 text-slate-300 text-sm leading-relaxed overflow-auto max-h-[60vh] pr-4">
                 <section>
                   <h4 className="font-black text-white text-xs uppercase tracking-widest mb-3 text-indigo-400">1. Action Sequencing</h4>
-                  <p>Unlike neural brains, these creatures use an <strong>Array of DNA</strong>. Each slot in the array is a specific instruction: Move, Jump, or Wait. They execute these in order until they reach the end or die.</p>
+                  <p>Each creature follows a list of instructions: Move, Jump, or Wait. They execute these in order until they reach the end or fall out of bounds.</p>
                 </section>
                 <section>
                   <h4 className="font-black text-white text-xs uppercase tracking-widest mb-3 text-indigo-400">2. Genetic Algorithms</h4>
-                  <p>We start with 30 individuals. The ones that get closest to the goal are selected as parents. Their DNA is cloned and <strong>Mutated</strong> (commands added, deleted, or weights changed) to form the next generation.</p>
+                  <p>The ones that get closest to the goal are selected as parents. Their DNA is cloned and <strong>Mutated</strong> (commands added, deleted, or weights changed) to form the next generation.</p>
                 </section>
                 <section>
                   <h4 className="font-black text-white text-xs uppercase tracking-widest mb-3 text-indigo-400">3. Survival of the Fittest</h4>
-                  <p>Creatures die if they go out of bounds. Fitness is earned by moving closer to the goal and <strong>accumulated for every tick spent staying on it</strong>. The faster they reach the goal and the longer they wait there, the higher their score!</p>
+                  <p>Fitness is earned by moving closer to the goal and <strong>accumulated for every tick spent staying on it</strong>. The faster they reach the goal and the longer they stay there, the higher their score!</p>
                 </section>
               </div>
               <button onClick={() => setShowHowItWorks(false)} className="w-full mt-10 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-5 rounded-3xl transition-all shadow-xl uppercase tracking-widest">Understood</button>

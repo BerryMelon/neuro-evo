@@ -40,7 +40,7 @@ export class Creature {
   }
 
   update(goalPos: { x: number, y: number }, engine: Matter.Engine) {
-    if (this.isDead || this.hasReachedGoal) return;
+    if (this.hasReachedGoal) return;
 
     this.ticksAlive++;
     
@@ -48,16 +48,20 @@ export class Creature {
     const { x, y } = this.body.position;
     const worldWidth = GRID_SIZE * TILE_SIZE;
     const worldHeight = GRID_SIZE * TILE_SIZE;
+    
     if (x < 0 || x > worldWidth || y < 0 || y > worldHeight) {
       this.isDead = true;
-      this.fitness -= 1000; // Penalty for falling off
+      this.fitness -= 1000;
       return;
     }
 
-    this.updateGroundStatus(engine);
-    this.executeCurrentCommand();
+    // 1. If not dead, execute commands
+    if (!this.isDead) {
+      this.updateGroundStatus(engine);
+      this.executeCurrentCommand();
+    }
 
-    // Fitness calculation
+    // 2. Continuous Fitness: Distance & Goal Stay
     const currentDist = Math.sqrt(
       Math.pow(this.body.position.x - goalPos.x, 2) + 
       Math.pow(this.body.position.y - goalPos.y, 2)
@@ -67,15 +71,16 @@ export class Creature {
       Math.pow(this.initialPos.y - goalPos.y, 2)
     );
     
-    this.fitness = initialDist - currentDist;
+    // Update basic distance fitness (don't overwrite, just update)
+    const distFitness = initialDist - currentDist;
 
-    // GOAL Logic: Accumulate fitness for every tick spent on goal
+    // Goal stay accumulation (Works even if isDead from sequence end)
     if (currentDist < TILE_SIZE * 1.2) {
       this.ticksOnGoal++;
-      // Award 100 points per tick spent on goal
-      this.fitness += 100;
+      this.fitness = distFitness + (this.ticksOnGoal * 100);
     } else {
-      this.ticksOnGoal = 0; // Reset if they move away
+      this.ticksOnGoal = 0;
+      this.fitness = distFitness;
     }
   }
 
