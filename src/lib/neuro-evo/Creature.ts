@@ -43,6 +43,16 @@ export class Creature {
 
     this.ticksAlive++;
     
+    // 0. Check Boundaries (Out of Bounds = Death)
+    const { x, y } = this.body.position;
+    const worldWidth = GRID_SIZE * TILE_SIZE;
+    const worldHeight = GRID_SIZE * TILE_SIZE;
+    if (x < 0 || x > worldWidth || y < 0 || y > worldHeight) {
+      this.isDead = true;
+      this.fitness -= 1000; // Penalty for falling off
+      return;
+    }
+
     this.updateGroundStatus(engine);
     this.executeCurrentCommand();
 

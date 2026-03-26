@@ -65,7 +65,9 @@ export default function NeuroEvo() {
     setBestGenome(best.genome.clone());
     setBestCommandIndex(best.currentCommandIndex);
 
-    if (nextTicks >= TICKS_PER_GEN) {
+    const allDead = evoRef.current.creatures.every(c => c.isDead || c.hasReachedGoal);
+
+    if (nextTicks >= TICKS_PER_GEN || allDead) {
       const { x, y } = worldRef.current.spawnPos;
       worldRef.current.clearCreatures(evoRef.current.creatures);
       evoRef.current.nextGeneration(x, y);
