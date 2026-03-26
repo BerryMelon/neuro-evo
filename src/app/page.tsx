@@ -17,7 +17,7 @@ export default function NeuroEvo() {
   const [bestFitness, setBestFitness] = useState(0);
   const [currentTicks, setCurrentTicks] = useState(0);
   const [bestBrain, setBestBrain] = useState<Brain | null>(null);
-  const [simSpeed, setSimSpeed] = useState(1); // 1x, 2x, 5x, etc.
+  const [simSpeed, setSimSpeed] = useState(1); 
   
   const simContainerRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<SimulationWorld | null>(null);
@@ -44,23 +44,17 @@ export default function NeuroEvo() {
   const runTick = useCallback(() => {
     if (!worldRef.current || !evoRef.current || !isSimulating) return;
 
-    // Run multiple steps per frame based on simSpeed
     for (let s = 0; s < simSpeed; s++) {
       evoRef.current.creatures.forEach(creature => {
         creature.update(worldRef.current!.goalPos, worldRef.current!.engine);
       });
-
       worldRef.current.step();
-
-      // We need to access the most current ticks within this loop
-      // but since currentTicks is from state, it's stale.
-      // We'll manage a local counter if needed or rely on the outside logic.
     }
 
     const nextTicks = currentTicks + simSpeed;
     setCurrentTicks(nextTicks);
 
-    if (nextTicks % 20 === 0 || simSpeed > 1) {
+    if (nextTicks % 10 === 0) {
       const sorted = [...evoRef.current.creatures].sort((a, b) => b.fitness - a.fitness);
       setBestBrain(sorted[0].brain.clone());
     }
@@ -101,10 +95,8 @@ export default function NeuroEvo() {
 
   const handleGridInteraction = (x: number, y: number) => {
     if (isSimulating) return;
-    
     const newGrid = [...grid.map(row => [...row])];
     newGrid[y][x] = activeTileType;
-    
     if (activeTileType === TileType.GOAL || activeTileType === TileType.SPAWN) {
       for (let gy = 0; gy < GRID_SIZE; gy++) {
         for (let gx = 0; gx < GRID_SIZE; gx++) {
@@ -126,19 +118,16 @@ export default function NeuroEvo() {
       setBestFitness(0);
       setBestBrain(null);
     } else {
-      // 1. Validation Check
       let hasSpawn = false;
       let hasGoal = false;
       for (const row of grid) {
         if (row.includes(TileType.SPAWN)) hasSpawn = true;
         if (row.includes(TileType.GOAL)) hasGoal = true;
       }
-
       if (!hasSpawn || !hasGoal) {
         alert("Please place both a SPAWN point and a GOAL point before starting!");
         return;
       }
-
       setIsSimulating(true);
     }
   };
@@ -234,7 +223,7 @@ export default function NeuroEvo() {
           </div>
         </div>
 
-        <aside className="w-96 border-l border-slate-800 bg-slate-900/30 p-6 flex flex-col gap-8 overflow-auto">
+        <aside className="w-[450px] border-l border-slate-800 bg-slate-900/30 p-6 flex flex-col gap-8 overflow-auto">
           <section>
             <h3 className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-4 text-center">Generation Stats</h3>
             <div className="grid grid-cols-2 gap-4">
@@ -264,30 +253,23 @@ export default function NeuroEvo() {
 
           <section className="flex-1 flex flex-col min-h-0">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-4 text-center">Best Creature Brain</h3>
-            {bestBrain ? (
-              <div className="flex-1 min-h-0 overflow-hidden">
+            <div className="flex-1 min-h-[400px]">
+              {bestBrain ? (
                 <BrainVisualizer brain={bestBrain} />
-              </div>
-            ) : (
-              <div className="flex-1 bg-slate-900/50 rounded-2xl border border-slate-800 border-dashed flex items-center justify-center text-slate-600 text-xs italic p-12 text-center">
-                Start evolution to see neural activity
-              </div>
-            )}
+              ) : (
+                <div className="h-full bg-slate-900/50 rounded-2xl border border-slate-800 border-dashed flex items-center justify-center text-slate-600 text-xs italic p-12 text-center">
+                  Start evolution to see neural activity
+                </div>
+              )}
+            </div>
           </section>
 
-          <section className="mt-auto space-y-3">
+          <section className="mt-auto">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-4">Environment</h3>
-            <button 
-              onClick={() => setGrid(INITIAL_GRID)}
-              disabled={isSimulating}
-              className="w-full py-3 rounded-xl border border-slate-700 text-xs font-bold text-slate-400 hover:bg-slate-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              RESET TO INITIAL
-            </button>
             <button 
               onClick={() => setGrid(Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(TileType.EMPTY)))}
               disabled={isSimulating}
-              className="w-full py-3 rounded-xl border border-rose-900/30 bg-rose-950/10 text-xs font-bold text-rose-400 hover:bg-rose-900/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              className="w-full py-3 rounded-xl border border-rose-900/30 bg-rose-950/10 text-xs font-bold text-rose-400 hover:bg-rose-900/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
             >
               CLEAR EVERYTHING
             </button>

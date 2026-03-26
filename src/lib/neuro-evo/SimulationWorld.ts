@@ -14,7 +14,9 @@ export class SimulationWorld {
   constructor(container: HTMLElement) {
     this.container = container;
     this.engine = Matter.Engine.create({
-      gravity: { x: 0, y: 1 }
+      gravity: { x: 0, y: 1 },
+      positionIterations: 10, // Default is 6
+      velocityIterations: 10  // Default is 4
     });
   }
 
