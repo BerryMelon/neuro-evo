@@ -68,16 +68,11 @@ export class Creature {
     
     this.fitness = initialDist - currentDist;
 
-    // GOAL Logic: Must STAY on goal
+    // GOAL Logic: Accumulate fitness for every tick spent on goal
     if (currentDist < TILE_SIZE * 1.2) {
       this.ticksOnGoal++;
-      // Must stay for 60 ticks (~1 second) to count as victory
-      if (this.ticksOnGoal >= 60) {
-        this.hasReachedGoal = true;
-        // Speed bonus: More points for reaching goal earlier
-        const speedBonus = Math.max(0, 1000 - this.ticksAlive);
-        this.fitness += 5000 + speedBonus;
-      }
+      // Award 100 points per tick spent on goal
+      this.fitness += 100;
     } else {
       this.ticksOnGoal = 0; // Reset if they move away
     }

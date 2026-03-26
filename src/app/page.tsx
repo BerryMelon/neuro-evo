@@ -69,7 +69,7 @@ export default function NeuroEvo() {
     setBestGenome(best.genome.clone());
     setBestCommandIndex(best.currentCommandIndex);
 
-    const allFinished = evoRef.current.creatures.every(c => c.isDead || c.hasReachedGoal);
+    const allFinished = evoRef.current.creatures.every(c => c.isDead);
 
     if (ticksRef.current >= TICKS_PER_GEN || allFinished) {
       const { x, y } = worldRef.current.spawnPos;
@@ -349,7 +349,7 @@ export default function NeuroEvo() {
                 </section>
                 <section>
                   <h4 className="font-black text-white text-xs uppercase tracking-widest mb-3 text-indigo-400">3. Survival of the Fittest</h4>
-                  <p>Creatures die if they go out of bounds. To win, a creature must not only reach the goal but <strong>stay there for 1 second</strong> to demonstrate stability. Faster times yield higher fitness scores!</p>
+                  <p>Creatures die if they go out of bounds. Fitness is earned by moving closer to the goal and <strong>accumulated for every tick spent staying on it</strong>. The faster they reach the goal and the longer they wait there, the higher their score!</p>
                 </section>
               </div>
               <button onClick={() => setShowHowItWorks(false)} className="w-full mt-10 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-5 rounded-3xl transition-all shadow-xl uppercase tracking-widest">Understood</button>
