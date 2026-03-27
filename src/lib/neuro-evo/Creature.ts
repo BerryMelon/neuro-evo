@@ -59,6 +59,18 @@ export class Creature {
     if (!this.isDead) {
       this.updateGroundStatus(engine);
       this.executeCurrentCommand();
+
+      // Velocity cap to prevent tunneling
+      const maxVelocity = 10;
+      const currentVel = this.body.velocity;
+      const speed = Math.sqrt(currentVel.x * currentVel.x + currentVel.y * currentVel.y);
+      if (speed > maxVelocity) {
+        const ratio = maxVelocity / speed;
+        Matter.Body.setVelocity(this.body, { 
+          x: currentVel.x * ratio, 
+          y: currentVel.y * ratio 
+        });
+      }
     }
 
     // 2. Continuous Fitness: Distance & Goal Stay

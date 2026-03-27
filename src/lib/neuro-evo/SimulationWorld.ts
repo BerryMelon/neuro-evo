@@ -16,8 +16,8 @@ export class SimulationWorld {
     this.container = container;
     this.engine = Matter.Engine.create({
       gravity: { x: 0, y: 1 },
-      positionIterations: 10,
-      velocityIterations: 10
+      positionIterations: 20,
+      velocityIterations: 20
     });
   }
 
