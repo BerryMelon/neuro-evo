@@ -1,6 +1,4 @@
 export enum CommandType {
-  MOVE_LEFT = 'MOVE_LEFT',
-  MOVE_RIGHT = 'MOVE_RIGHT',
   JUMP_LEFT = 'JUMP_LEFT',
   JUMP_RIGHT = 'JUMP_RIGHT',
   JUMP_UP = 'JUMP_UP',
@@ -27,10 +25,10 @@ export class Genome {
     const types = Object.values(CommandType);
     const type = types[Math.floor(Math.random() * types.length)];
     
-    // For MOVE/WAIT, weight is duration (ticks 10-100)
+    // For WAIT, weight is duration (ticks 10-100)
     // For JUMP, weight is magnitude (0.5 - 1.5)
     let weight = 1.0;
-    if (type === CommandType.MOVE_LEFT || type === CommandType.MOVE_RIGHT || type === CommandType.WAIT) {
+    if (type === CommandType.WAIT) {
       weight = Math.floor(Math.random() * 90) + 10;
     } else {
       weight = Math.random() + 0.5;

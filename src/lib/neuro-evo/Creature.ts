@@ -111,14 +111,6 @@ export class Creature {
     const jumpForce = 0.015;
 
     switch (command.type) {
-      case CommandType.MOVE_LEFT:
-        Matter.Body.applyForce(this.body, this.body.position, { x: -moveForce, y: 0 });
-        if (this.currentCommandTicks >= command.weight) this.advanceCommand();
-        break;
-      case CommandType.MOVE_RIGHT:
-        Matter.Body.applyForce(this.body, this.body.position, { x: moveForce, y: 0 });
-        if (this.currentCommandTicks >= command.weight) this.advanceCommand();
-        break;
       case CommandType.WAIT:
         if (this.currentCommandTicks >= command.weight) this.advanceCommand();
         break;

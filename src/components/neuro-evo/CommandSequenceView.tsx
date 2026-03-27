@@ -11,8 +11,6 @@ interface Props {
 export default function CommandSequenceView({ genome, currentIndex }: Props) {
   const getIcon = (type: CommandType) => {
     switch (type) {
-      case CommandType.MOVE_LEFT: return '←';
-      case CommandType.MOVE_RIGHT: return '→';
       case CommandType.JUMP_LEFT: return '↖';
       case CommandType.JUMP_RIGHT: return '↗';
       case CommandType.JUMP_UP: return '↑';
@@ -23,8 +21,6 @@ export default function CommandSequenceView({ genome, currentIndex }: Props) {
   const getColor = (type: CommandType) => {
     switch (type) {
       case CommandType.WAIT: return 'bg-slate-700';
-      case CommandType.MOVE_LEFT:
-      case CommandType.MOVE_RIGHT: return 'bg-blue-600';
       default: return 'bg-indigo-600';
     }
   };

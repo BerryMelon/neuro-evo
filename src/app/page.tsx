@@ -134,7 +134,7 @@ export default function NeuroEvo() {
   };
 
   const addSeedCommand = (type: CommandType) => {
-    const defaultWeight = (type === CommandType.MOVE_LEFT || type === CommandType.MOVE_RIGHT || type === CommandType.WAIT) ? 60 : 1.0;
+    const defaultWeight = (type === CommandType.WAIT) ? 60 : 1.0;
     setSeedCommands([...seedCommands, { type, weight: defaultWeight }]);
   };
 
@@ -276,7 +276,7 @@ export default function NeuroEvo() {
                       {seedCommands.map((cmd, i) => (
                         <div key={i} className="bg-slate-800 p-4 rounded-2xl border border-slate-700 flex flex-col items-center relative group hover:border-indigo-500/50 transition-colors shadow-lg">
                           <span className="text-2xl mb-1">
-                            {cmd.type.includes('LEFT') ? '←' : cmd.type.includes('RIGHT') ? '→' : cmd.type.includes('UP') ? '↑' : '⏳'}
+                            {cmd.type === CommandType.JUMP_LEFT ? '↖' : cmd.type === CommandType.JUMP_RIGHT ? '↗' : cmd.type === CommandType.JUMP_UP ? '↑' : '⏳'}
                           </span>
                           <span className="font-black text-[8px] text-slate-500 uppercase">{cmd.type.split('_').pop()}</span>
                           <button 
@@ -297,7 +297,7 @@ export default function NeuroEvo() {
                       onClick={() => addSeedCommand(type)}
                       className="py-4 bg-slate-800 hover:bg-slate-700 rounded-2xl border border-slate-700 text-[10px] font-black uppercase tracking-widest transition-all hover:scale-[1.02] shadow-md"
                     >
-                      + {type.replace('JUMP_', 'JUMP ').replace('MOVE_', 'MOVE ')}
+                      + {type.replace('_', ' ')}
                     </button>
                   ))}
                 </div>
