@@ -31,7 +31,10 @@ export class EvolutionManager {
       if (seedGenome && i > 0) {
         this.mutateGenome(genome);
       }
-      this.creatures.push(new Creature(`c-${i}`, startX, startY, genome, this.getRandomColor(), this.currentEmoji));
+      // Add small offset to prevent overlapping explosions
+      const offsetX = (Math.random() - 0.5) * 2;
+      const offsetY = (Math.random() - 0.5) * 2;
+      this.creatures.push(new Creature(`c-${i}`, startX + offsetX, startY + offsetY, genome, this.getRandomColor(), this.currentEmoji));
     }
   }
 
@@ -82,14 +85,18 @@ export class EvolutionManager {
     const nextGen: Creature[] = [];
 
     for (let i = 0; i < topPerformers.length; i++) {
-      nextGen.push(new Creature(`elite-${i}`, startX, startY, topPerformers[i].genome.clone(), topPerformers[i].color, this.currentEmoji));
+      const offsetX = (Math.random() - 0.5) * 2;
+      const offsetY = (Math.random() - 0.5) * 2;
+      nextGen.push(new Creature(`elite-${i}`, startX + offsetX, startY + offsetY, topPerformers[i].genome.clone(), topPerformers[i].color, this.currentEmoji));
     }
 
     while (nextGen.length < this.populationSize) {
       const parent = topPerformers[Math.floor(Math.random() * topPerformers.length)];
       const childGenome = parent.genome.clone();
       this.mutateGenome(childGenome);
-      nextGen.push(new Creature(`c-${nextGen.length}`, startX, startY, childGenome, parent.color, this.currentEmoji));
+      const offsetX = (Math.random() - 0.5) * 2;
+      const offsetY = (Math.random() - 0.5) * 2;
+      nextGen.push(new Creature(`c-${nextGen.length}`, startX + offsetX, startY + offsetY, childGenome, parent.color, this.currentEmoji));
     }
 
     this.creatures = nextGen;
